@@ -1,97 +1,94 @@
 
-# Import Libraries #
-import pandas as pd
 
-import os
+## 📓 **Jupyter Notebook Version**
 
+This repository includes an interactive **Jupyter Notebook (`.ipynb`)** that demonstrates the full workflow for handling large **SQL `IN` clause** queries using chunking.
+
+The notebook version is ideal for **ad hoc analysis**, **step-by-step debugging**, and understanding how the batching logic works.
+
+---
+
+## 🚀 **What the Notebook Does**
+
+The notebook walks through the process in clear stages:
+
+* 📥 Load a list of IDs from an Excel file
+* 🧹 Clean and prepare the ID list
+* ✂️ Split IDs into smaller chunks
+* 🧩 Dynamically build SQL `IN` clauses
+* 🗄️ Execute the query for each chunk
+* 🔗 Combine all results into one dataset
+* 📤 Export the final output to Excel
+
+---
+
+## ▶️ **How to Run the Notebook**
+
+### 1️⃣ Install Required Libraries
+
+```bash
 pip install pandas openpyxl
+```
 
+### 2️⃣ Start Jupyter Notebook
 
-# CONFIGURATION #
+```bash
+jupyter notebook
+```
 
-## Path to input Excel file containing IDs
-INPUT_EXCEL = "input_ids.xlsx"
+### 3️⃣ Open the Notebook File
 
-## Column name in the input file that contains IDs
-INPUT_COLUMN = "Customer_Number"
+Open the uploaded `.ipynb` file from the Jupyter interface.
 
-## Number of IDs per SQL IN clause
-CHUNK_SIZE = 500
+### 4️⃣ Update Configuration Cells
 
-## Path to save final combined output
-OUTPUT_FILE = "query_output.xlsx"
+Before running all cells, update:
 
-# LOAD INPUT #
+* 📁 Input Excel file path
+* 🏷️ Column name containing IDs
+* 🧠 SQL query
+* 🔐 Database connection/query execution logic
 
-df_ids = pd.read_excel(INPUT_EXCEL)
+### 5️⃣ Run All Cells
 
-id_list = (
-    df_ids[INPUT_COLUMN]
-    .dropna()
-    .astype(str)
-    .str.strip()
-    .unique()
-    .tolist()
-)
+Run cells from **top to bottom** to execute the full workflow.
 
-if not id_list:
-    raise ValueError("No valid values found in input Excel")
+---
 
-print(f"Total unique IDs found: {len(id_list)}")
+## 🔐 **Security Best Practices**
 
+For safety, this notebook does **not** include:
 
-# HELPER FUNCTIONS #
+* ❌ Database credentials
+* ❌ Internal connection libraries
+* ❌ Confidential table or schema names
 
-def chunk_list(lst, size):
-    """Yield successive chunks from list."""
-    for i in range(0, len(lst), size):
-        yield lst[i:i + size]
+**Always use:**
 
+✔ Environment variables
+✔ Secure credential storage
+✔ Sanitized queries before sharing publicly
 
-def format_in_values(values):
-    """Format values for SQL IN clause: 'A','B','C' """
-    return ", ".join(f"'{v}'" for v in values)
+---
 
+## 🛠 **Where Customization Is Required**
 
-def run_query(query: str) -> pd.DataFrame:
-    """
-    Replace this function with your own database connection logic.
+You must modify:
 
-    Example:
-        - Use cx_Oracle / oracledb
-        - Use pymysql / sqlalchemy
-        - Use internal data access libraries
-    """
-    raise NotImplementedError("Add your database query execution logic here.")
+| Section           | What to Update                         |
+| ----------------- | -------------------------------------- |
+| Database Function | Add your own query execution logic     |
+| SQL Query         | Replace with your required query       |
+| File Paths        | Set correct input and output locations |
 
+The chunking and merging logic will work as-is.
 
-# BASE QUERY TEMPLATE #
+---
 
-BASE_QUERY = """
-SELECT column1, column2, column3
-FROM your_table
-WHERE customer_number IN ({})
-"""
+## 💡 **Performance Tips**
 
+* If queries fail → **reduce `CHUNK_SIZE`**
+* If queries are stable → **increase `CHUNK_SIZE`** to reduce total runs
+* For very large pulls → consider adding **parallel execution**
 
-# MAIN EXECUTION #
-
-final_df = pd.DataFrame()
-
-for idx, chunk in enumerate(chunk_list(id_list, CHUNK_SIZE), start=1):
-    in_clause = format_in_values(chunk)
-    query = BASE_QUERY.format(in_clause)
-
-    print(f"Running chunk {idx} | Records in chunk: {len(chunk)}")
-
-    temp_df = run_query(query)
-    final_df = pd.concat([final_df, temp_df], ignore_index=True)
-
-print("All chunks executed successfully")
-
-final_df.to_excel(OUTPUT_FILE, index=False)
-
-print(f"Total input IDs  : {len(id_list)}")
-print(f"Total rows fetched: {len(final_df)}")
-print(f"Output saved to  : {os.path.abspath(OUTPUT_FILE)}")
-
+---
